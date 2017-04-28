@@ -162,4 +162,26 @@ describe('Blog posts API resources', () => {
         });
     });
   });
+
+  describe('DELETE endpoint', () => {
+
+    it('should delete a blog post by id', () => {
+      let post;
+
+      return BlogPost
+        .findOne()
+        .exec()
+        .then(_post => {
+          post = _post;
+          return chai.request(app).delete(`/posts/${post.id}`);
+        })
+        .then(res => {
+          res.should.have.status(204);
+          return BlogPost.findById(post.id).exec();
+        })
+        .then(_post => {
+          should.not.exist(_post);
+        });
+    });
+  });
 });
