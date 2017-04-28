@@ -90,12 +90,75 @@ describe('Blog posts API resources', () => {
           resPost = res.body[0];
           return BlogPost.findById(resPost.id);
         })
-        .then(function(post) {
+        .then(post => {
           resPost.id.should.equal(post.id);
           resPost.title.should.equal(post.title);
           resPost.content.should.equal(post.content);
           resPost.author.should.contain(post.author.lastName);
           resPost.author.should.contain(post.author.lastName);
+        });
+    });
+  });
+  describe('POST endpoint', () => {
+
+    it('should add a new blog post', () => {
+      const newPost = generateBlogPost();
+      
+      return chai.request(app)
+        .post('/posts')
+        .send(newPost)
+        .then(res => {
+          res.should.have.status(201);
+          res.should.be.json;
+          res.body.should.be.an('object');
+          res.body.should.include.keys('id', 'title', 'content', 'author', 'created');
+          res.body.title.should.equal(newPost.title);
+          res.body.id.should.not.be.null;
+          res.body.content.should.equal(newPost.content);
+          res.body.author.should.contain(newPost.author.firstName);
+          res.body.author.should.contain(newPost.author.lastName);
+          return BlogPost.findById(res.body.id);
+        })
+        .then(post => {
+          post.title.should.equal(newPost.title);
+          post.content.should.equal(newPost.content);
+          post.author.firstName.should.equal(newPost.author.firstName);
+          post.author.lastName.should.equal(newPost.author.lastName);
+        });
+    });
+  });
+
+  describe('PUT endpoint', () => {
+
+    it('should update the fields supplied in the params', () => {
+      const updateData = {
+        title: 'Whatever',
+        content: 'The turtle walks across the busy highway.',
+        author: {
+          firstName: 'Bagel',
+          lastName: 'Toon'
+        }
+      };
+      
+      return BlogPost
+        .findOne()
+        .exec()
+        .then(post => {
+          updateData.id = post.id;
+
+          return chai.request(app)
+            .put(`/posts/${post.id}`)
+            .send(updateData)
+        })
+        .then(res => {
+          res.should.have.status(201);
+          return BlogPost.findById(updateData.id).exec();
+        })
+        .then(post => {
+          post.title.should.equal(updateData.title);
+          post.content.should.equal(updateData.content);
+          post.author.firstName.should.contain(updateData.author.firstName);
+          post.author.lastName.should.contain(updateData.author.lastName);
         });
     });
   });
